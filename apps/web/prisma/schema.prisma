@@ -1,0 +1,74 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id    String @id @default(uuid())
+  email String @unique
+  name  String?
+  orders Order[]
+  files  File[]
+}
+
+model File {
+  id        String   @id @default(uuid())
+  userId    String?
+  User      User?    @relation(fields: [userId], references: [id])
+  url       String
+  fileType  String?
+  volume    Float?
+  createdAt DateTime @default(now())
+  
+  SlicingResults SlicingResult[]
+}
+
+model SlicingResult {
+  id           String @id @default(uuid())
+  fileId       String
+  File         File   @relation(fields: [fileId], references: [id])
+  material     String?
+  layerHeight  Float?
+  infill       Int?
+  printTime    Int    // in seconds
+  filamentUsed Float  // in grams
+  support      Boolean?
+  createdAt    DateTime @default(now())
+
+  OrderItems   OrderItem[]
+}
+
+model Order {
+  id        String @id @default(uuid())
+  userId    String
+  User      User   @relation(fields: [userId], references: [id])
+  status    String // queued, printing, post-processing, completed, shipped
+  total     Float
+  createdAt DateTime @default(now())
+
+  Items     OrderItem[]
+  Payments  Payment[]
+}
+
+model OrderItem {
+  id              String @id @default(uuid())
+  orderId         String
+  Order           Order  @relation(fields: [orderId], references: [id])
+  slicingResultId String
+  SlicingResult   SlicingResult @relation(fields: [slicingResultId], references: [id])
+  quantity        Int
+  price           Float
+}
+
+model Payment {
+  id        String @id @default(uuid())
+  orderId   String
+  Order     Order  @relation(fields: [orderId], references: [id])
+  method    String // credit_card, promptpay
+  status    String // pending, paid, failed
+  paidAt    DateTime?
+}

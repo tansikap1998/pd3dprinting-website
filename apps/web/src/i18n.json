@@ -1,0 +1,16 @@
+{
+  "upload": {
+    "title": {
+      "th": "อัปโหลดไฟล์ 3D",
+      "en": "Upload 3D File"
+    },
+    "subtitle": {
+      "th": "รองรับ .stl, .obj สูงสุด 100MB",
+      "en": "Support .stl, .obj up to 100MB."
+    },
+    "button": {
+      "th": "ประเมินราคา",
+      "en": "Estimate Cost"
+    }
+  }
+}
