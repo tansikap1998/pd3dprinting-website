@@ -1,0 +1,11 @@
+{
+  "name": "print-stock-line",
+  "version": "1.0.0",
+  "description": "ระบบจัดการสต็อกวัสดุ + คิวงานพิมพ์ 3 มิติ แจ้งเตือนเข้ากลุ่ม LINE OA",
+  "type": "module",
+  "main": "server.js",
+  "engines": { "node": ">=22.13" },
+  "scripts": {
+    "start": "node --no-warnings server.js"
+  }
+}
