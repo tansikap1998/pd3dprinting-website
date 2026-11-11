@@ -38,7 +38,7 @@ export async function POST(req: Request) {
     if (!customer || !contact) return bad('กรุณากรอกชื่อและช่องทางติดต่อ');
 
     const buf = await file.arrayBuffer();
-    let dims: { x: number; y: number; z: number; volume: number };
+    let dims: { x: number; y: number; z: number; volume: number; surfaceArea: number };
     try {
       dims = await parseSTL(buf);
     } catch {
@@ -46,7 +46,7 @@ export async function POST(req: Request) {
     }
     if (!(dims.volume > 0)) return bad('ไฟล์ STL ไม่มีปริมาตร (โมเดลอาจไม่ปิด)');
 
-    const est = estimate({ volume: dims.volume, infill, material, layerHeight, quantity });
+    const est = estimate({ volume: dims.volume, surfaceArea: dims.surfaceArea, height: dims.z, infill, material, layerHeight, quantity });
 
     const uploaded = await uploadFile(buf, file.name);
     const spec = [

@@ -25,23 +25,43 @@ const pricePerGram: Record<string, number> = {
   'Resin Tough': 3.5,
 };
 
-export type EstimateInput = { volume: number; infill: number; material: string; layerHeight: number; quantity: number };
+// ผนัง + ผิวบน/ล่าง: FDM ทั่วไปใช้ 2 perimeter (0.4mm × 2) และ top/bottom ~0.8mm → ถือว่าเปลือกหนา ~0.8 มม.
+const SHELL_THICKNESS_CM = 0.08;
+// อัตราฉีดเส้นเฉลี่ยรวมการเคลื่อนที่ (cm³ ของเนื้อพลาสติกต่อชั่วโมง) ที่ layer 0.2mm
+const FDM_RATE_CM3_PER_HOUR = 12;
+// Resin พิมพ์ทั้งชั้นพร้อมกัน เวลาขึ้นกับความสูงชิ้นงาน (~2.5 วินาที/ชั้น)
+const RESIN_SECONDS_PER_LAYER = 2.5;
+
+export type EstimateInput = {
+  volume: number; // cm³
+  surfaceArea?: number; // cm² (ถ้าไม่ส่งมา จะประมาณจากปริมาตรเหมือนลูกบาศก์)
+  height?: number; // mm (ใช้คำนวณเวลาพิมพ์ Resin)
+  infill: number;
+  material: string;
+  layerHeight: number;
+  quantity: number;
+};
 export type EstimateResult = { weightG: number; printTimeMin: number; pricePerChip: number; total: number };
 
-export function estimate({ volume, infill, material, layerHeight, quantity }: EstimateInput): EstimateResult {
+export function estimate({ volume, surfaceArea, height, infill, material, layerHeight, quantity }: EstimateInput): EstimateResult {
   const materialDensity = density[material] || 1.24;
   const materialPrice = pricePerGram[material] || 1.5;
+  const isResin = material.startsWith('Resin');
 
-  // volume is in cm³
-  const weightG = volume * materialDensity * (infill / 100);
+  // เนื้อพลาสติกจริง = เปลือก (เต็ม 100%) + ด้านใน × infill
+  const area = surfaceArea && surfaceArea > 0 ? surfaceArea : 6 * Math.cbrt(volume) ** 2;
+  const shell = Math.min(volume, area * SHELL_THICKNESS_CM);
+  const fill = isResin ? 1 : Math.min(1, Math.max(0, infill / 100));
+  const materialVolume = shell + (volume - shell) * fill;
+  const weightG = materialVolume * materialDensity;
 
-  // Rough estimate: 15 cm³ per hour at 100% infill and 0.2mm layer height
-  const baseSpeedCm3PerHour = 15;
-  const layerHeightFactor = 0.2 / layerHeight; // thicker layers = faster
-  const infillFactor = infill / 100; // less infill = faster
-  const adjustedSpeed = baseSpeedCm3PerHour * layerHeightFactor * (1 / Math.max(0.2, infillFactor));
-
-  let printTimeHours = volume / adjustedSpeed;
+  let printTimeHours: number;
+  if (isResin) {
+    const h = height && height > 0 ? height : Math.cbrt(volume) * 10;
+    printTimeHours = (h / layerHeight) * RESIN_SECONDS_PER_LAYER / 3600 + 0.25; // + เวลาเตรียม/ยกฐาน
+  } else {
+    printTimeHours = materialVolume / (FDM_RATE_CM3_PER_HOUR * (layerHeight / 0.2)) + 0.1; // + heat-up / first layer
+  }
   if (printTimeHours < 0.5) printTimeHours = 0.5; // minimum time
   const printTimeMin = Math.round(printTimeHours * 60);
 
