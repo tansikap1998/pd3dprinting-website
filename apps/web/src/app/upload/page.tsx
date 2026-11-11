@@ -81,7 +81,7 @@ export default function Upload() {
     try {
       // 1. Parse STL and get volume
       const arrayBuffer = await file.arrayBuffer();
-      const { volume, x, y, z } = await parseSTL(arrayBuffer);
+      const { volume, surfaceArea, x, y, z } = await parseSTL(arrayBuffer);
 
       console.log(`Parsed STL: Dimensions = ${x} x ${y} x ${z} mm, Volume = ${volume} cm³`);
 
@@ -91,6 +91,8 @@ export default function Upload() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           volume,
+          surfaceArea,
+          height: z,
           infill: technology === 'Resin' ? 100 : infill, // Resin is solid
           material,
           layerHeight,
