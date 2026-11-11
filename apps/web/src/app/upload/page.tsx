@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { parseSTL } from '@/lib/stlParser';
 
 type EstimateResult = {
@@ -20,6 +20,49 @@ export default function Upload() {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<EstimateResult | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [color, setColor] = useState('ขาว');
+  const [customerName, setCustomerName] = useState('');
+  const [contact, setContact] = useState('');
+  const [note, setNote] = useState('');
+  const [ordering, setOrdering] = useState(false);
+  const [order, setOrder] = useState<{ orderId: string; total: number } | null>(null);
+
+  // เปลี่ยนไฟล์หรือค่าตั้งค่า → ต้องประเมินราคาใหม่
+  useEffect(() => {
+    setResult(null);
+    setOrder(null);
+  }, [file, technology, material, infill, layerHeight, quantity]);
+
+  const handleOrder = async () => {
+    if (!file || !result) return;
+    if (!customerName.trim() || !contact.trim()) {
+      setError('กรุณากรอกชื่อและเบอร์โทร / LINE ID');
+      return;
+    }
+    setOrdering(true);
+    setError(null);
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('technology', technology);
+      fd.append('material', material);
+      fd.append('color', color);
+      fd.append('infill', String(infill));
+      fd.append('layerHeight', String(layerHeight));
+      fd.append('quantity', String(quantity));
+      fd.append('customerName', customerName);
+      fd.append('contact', contact);
+      fd.append('note', note);
+      const res = await fetch('/api/order', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'สั่งพิมพ์ไม่สำเร็จ');
+      setOrder({ orderId: data.orderId, total: data.total });
+    } catch (err: any) {
+      setError(err.message || 'สั่งพิมพ์ไม่สำเร็จ');
+    } finally {
+      setOrdering(false);
+    }
+  };
 
   const materials = technology === 'FDM' 
     ? ['PLA', 'ABS', 'PETG'] 
@@ -122,6 +165,19 @@ export default function Upload() {
           </div>
         </div>
 
+        <div>
+          <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">สี (Color)</label>
+          <select
+            className="w-full border border-gray-300 rounded-md shadow-sm p-2 bg-white dark:bg-gray-800 dark:border-gray-700"
+            value={color}
+            onChange={(e) => setColor(e.target.value)}
+          >
+            {['ขาว', 'ดำ', 'เทา', 'แดง', 'น้ำเงิน', 'เขียว', 'เหลือง', 'ส้ม', 'ชมพู', 'ม่วง', 'ใส', 'อื่นๆ'].map((c) => (
+              <option key={c} value={c}>{c}</option>
+            ))}
+          </select>
+        </div>
+
         {technology === 'FDM' && (
           <div>
             <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Infill Density</label>
@@ -133,6 +189,7 @@ export default function Upload() {
                 { label: 'แข็งแรงมาก', value: 80 }
               ].map(opt => (
                 <button
+                  type="button"
                   key={opt.value}
                   onClick={() => setInfill(opt.value)}
                   className={`py-2 px-1 text-sm rounded border transition-colors ${
@@ -210,6 +267,48 @@ export default function Upload() {
               <p className="text-xl font-medium mt-1 text-blue-600 dark:text-blue-400">{result.total} THB</p>
             </div>
           </div>
+
+          {order ? (
+            <div className="mt-6 p-4 bg-green-50 border border-green-200 text-green-800 rounded-md dark:bg-green-950 dark:border-green-800 dark:text-green-200">
+              <p className="font-semibold">✅ สั่งพิมพ์เรียบร้อย! เลขที่ออเดอร์ {order.orderId}</p>
+              <p className="text-sm mt-1">ยอดรวม {order.total} THB · ทีมงานได้รับงานแล้ว และจะติดต่อกลับทาง {contact}</p>
+            </div>
+          ) : (
+            <div className="mt-6 space-y-3">
+              <h4 className="font-medium text-gray-900 dark:text-white">ข้อมูลผู้สั่ง</h4>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <input
+                  className="w-full border border-gray-300 rounded-md p-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+                  placeholder="ชื่อ *"
+                  value={customerName}
+                  maxLength={100}
+                  onChange={(e) => setCustomerName(e.target.value)}
+                />
+                <input
+                  className="w-full border border-gray-300 rounded-md p-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+                  placeholder="เบอร์โทร / LINE ID *"
+                  value={contact}
+                  maxLength={100}
+                  onChange={(e) => setContact(e.target.value)}
+                />
+              </div>
+              <textarea
+                className="w-full border border-gray-300 rounded-md p-2 bg-white dark:bg-gray-900 dark:border-gray-700"
+                placeholder="หมายเหตุถึงทีมงาน (ไม่บังคับ)"
+                rows={2}
+                maxLength={500}
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+              />
+              <button
+                onClick={handleOrder}
+                disabled={ordering}
+                className="w-full px-4 py-3 bg-green-600 hover:bg-green-700 disabled:bg-green-400 disabled:cursor-not-allowed transition-colors text-white font-medium rounded-lg shadow-sm"
+              >
+                {ordering ? 'กำลังส่งออเดอร์...' : `ยืนยันสั่งพิมพ์ (${result.total} THB)`}
+              </button>
+            </div>
+          )}
         </div>
       )}
     </div>

@@ -1,0 +1,540 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>คิวพิมพ์ 3D & สต็อก</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4f5f7;--card:#fff;--ink:#1d2330;--muted:#6b7280;--line:#e5e7eb;--brand:#06c755;--brand-d:#05a647;--warn:#f59e0b;--bad:#ef4444;--info:#3b82f6;--chip:#f1f5f9}
+@media (prefers-color-scheme:dark){:root{--bg:#0f1218;--card:#181c24;--ink:#e6e8ec;--muted:#9aa3b2;--line:#2a303b;--chip:#232935}}
+*{box-sizing:border-box}
+body{margin:0;font-family:'IBM Plex Sans Thai',system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:15px}
+header{background:var(--card);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.top{max-width:1200px;margin:auto;padding:12px 16px;display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.top h1{font-size:18px;margin:0;display:flex;gap:8px;align-items:center}
+.top .sp{flex:1}
+nav{max-width:1200px;margin:auto;padding:0 16px;display:flex;gap:4px;overflow-x:auto}
+nav button{background:none;border:0;border-bottom:3px solid transparent;padding:10px 14px;font:inherit;color:var(--muted);cursor:pointer;white-space:nowrap}
+nav button.on{color:var(--ink);border-color:var(--brand);font-weight:600}
+main{max-width:1200px;margin:auto;padding:16px}
+.grid{display:grid;gap:12px}
+.stats{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px}
+.stat .n{font-size:26px;font-weight:700}.stat .l{color:var(--muted);font-size:13px}
+h2{font-size:16px;margin:20px 0 10px;display:flex;align-items:center;gap:8px}
+h2 .sp{flex:1}
+.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--ink);padding:7px 12px;border-radius:8px;cursor:pointer;font-size:14px}
+.btn:hover{border-color:var(--muted)}
+.btn.p{background:var(--brand);border-color:var(--brand);color:#fff}.btn.p:hover{background:var(--brand-d)}
+.btn.d{color:var(--bad)}.btn.s{padding:4px 9px;font-size:13px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:500}
+.tw{overflow-x:auto}
+.chip{display:inline-block;padding:2px 8px;border-radius:99px;font-size:12px;background:var(--chip);white-space:nowrap}
+.st-queued{background:#e0e7ff;color:#3730a3}.st-printing{background:#dcfce7;color:#166534}.st-done{background:#e5e7eb;color:#374151}.st-failed{background:#fee2e2;color:#991b1b}.st-cancelled{background:#f3f4f6;color:#6b7280}
+.st-idle{background:#dcfce7;color:#166534}.st-maintenance{background:#fef3c7;color:#92400e}
+.hot{color:var(--bad);font-weight:600}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid var(--line);vertical-align:-1px}
+.bar{height:6px;background:var(--chip);border-radius:9px;overflow:hidden;margin-top:4px;min-width:90px}.bar i{display:block;height:100%;background:var(--brand)}
+.low .bar i{background:var(--bad)}
+.printers{grid-template-columns:repeat(auto-fill,minmax(220px,1fr))}
+.pr h3{margin:0 0 6px;font-size:15px}.muted{color:var(--muted);font-size:13px}
+.acts{display:flex;gap:6px;flex-wrap:wrap}
+dialog{border:0;border-radius:14px;padding:0;width:min(520px,calc(100vw - 32px));background:var(--card);color:var(--ink)}
+dialog::backdrop{background:#0008}
+dialog form{padding:18px}
+dialog h3{margin:0 0 12px}
+.f{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.f label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted)}
+.f .full{grid-column:1/-1}
+input,select,textarea{font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--ink);width:100%}
+.ck{flex-direction:row!important;align-items:center;gap:8px!important}.ck input{width:auto}
+.foot{display:flex;justify-content:flex-end;gap:8px;margin-top:16px}
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#111827;color:#fff;padding:10px 16px;border-radius:10px;opacity:0;transition:.25s;pointer-events:none;z-index:99;max-width:90vw}
+#toast.on{opacity:1}
+.empty{color:var(--muted);text-align:center;padding:24px}
+pre.log{white-space:pre-wrap;font-size:12px;background:var(--bg);padding:8px;border-radius:8px;margin:4px 0 0}
+.ok{color:var(--brand)}.no{color:var(--bad)}
+code{background:var(--chip);padding:1px 6px;border-radius:5px}
+.shop{display:grid;grid-template-columns:1fr 360px;gap:16px;align-items:start}
+.cart{position:sticky;top:110px}
+.shop>*,.vr>*{min-width:0}
+main{overflow-x:clip}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px}
+.toolbar input[type=search]{flex:1;min-width:200px}
+.pg{margin-bottom:10px;padding:0;overflow:hidden}
+.pg-h{padding:10px 14px;display:flex;gap:10px;align-items:flex-start;border-bottom:1px solid var(--line)}
+.pg-h .t{flex:1;min-width:0}.pg-h b{display:block}.pg-h .muted{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vr{display:grid;grid-template-columns:minmax(120px,1.4fr) 70px 80px minmax(120px,1.2fr) 110px;gap:8px;align-items:center;padding:7px 14px;border-bottom:1px solid var(--line)}
+.vr:last-child{border-bottom:0}
+.vr select,.vr input{padding:5px 7px;font-size:13px}
+.qty{display:flex;gap:4px}.qty input{width:52px;text-align:center}
+.ci{display:flex;gap:8px;align-items:center;padding:8px 0;border-bottom:1px dashed var(--line)}
+.ci .t{flex:1;min-width:0;font-size:14px}.ci input{width:56px;text-align:center;padding:4px}
+.warn{color:var(--warn);font-size:12px}
+.hid{opacity:.5}
+#cartFab{display:none;position:fixed;right:16px;bottom:16px;z-index:9;box-shadow:0 4px 16px #0004}
+@media (max-width:900px){.shop{grid-template-columns:1fr}.cart{position:static}#cartFab{display:block}}
+@media (max-width:600px){.f{grid-template-columns:1fr}.vr{grid-template-columns:1fr 1fr;}.vr .vn{grid-column:1/-1}}
+</style>
+</head>
+<body>
+<header>
+  <div class="top">
+    <h1>🖨️ คิวพิมพ์ 3D & สต็อกวัสดุ</h1>
+    <div class="sp"></div>
+    <button class="btn" onclick="sendSummary()">📤 ส่งสรุปเข้า LINE</button>
+    <button class="btn p" onclick="openJob()">+ เพิ่มงานพิมพ์</button>
+  </div>
+  <nav id="tabs">
+    <button data-t="queue" class="on">คิวงานพิมพ์</button>
+    <button data-t="products">🛒 สินค้า/สั่งพิมพ์</button>
+    <button data-t="stock">สต็อกวัสดุ</button>
+    <button data-t="printers">เครื่องพิมพ์</button>
+    <button data-t="history">ประวัติ</button>
+    <button data-t="settings">ตั้งค่า LINE</button>
+  </nav>
+</header>
+<main>
+  <section id="t-queue">
+    <div class="grid stats" id="stats"></div>
+    <h2>เครื่องพิมพ์</h2>
+    <div class="grid printers" id="prMini"></div>
+    <h2>คิวงาน <span class="sp"></span></h2>
+    <div class="card tw"><table><thead><tr><th>#</th><th>งาน</th><th>วัสดุ</th><th>จำนวน/น้ำหนัก</th><th>เวลา</th><th>สถานะ</th><th></th></tr></thead><tbody id="queueBody"></tbody></table></div>
+  </section>
+
+  <section id="t-products" hidden>
+    <div class="toolbar">
+      <input type="search" id="pq" placeholder="🔍 ค้นหาสินค้า / สี / SKU..." oninput="renderProducts()">
+      <label class="muted" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="pHidden" style="width:auto" onchange="renderProducts()"> แสดงที่ซ่อน</label>
+      <button class="btn" onclick="$('#xlsx').click()">📥 นำเข้าจาก Shopee (.xlsx)</button>
+      <button class="btn" onclick="autoMat()" title="จับคู่วัสดุจากสีในชื่อตัวเลือก">🎨 จับคู่วัสดุอัตโนมัติ</button>
+      <input type="file" id="xlsx" accept=".xlsx" hidden onchange="importXlsx(this)">
+    </div>
+    <div class="shop">
+      <div id="plist"></div>
+      <div class="card cart" id="cartBox"></div>
+    </div>
+    <button class="btn p" id="cartFab" onclick="$('#cartBox').scrollIntoView({behavior:'smooth'})">🧾 ใบสั่งพิมพ์ (<span id="cartN">0</span>)</button>
+  </section>
+
+  <section id="t-stock" hidden>
+    <h2>วัสดุ (ฟิลาเมนต์/เรซิน) <span class="sp"></span><button class="btn p" onclick="openMat()">+ เพิ่มวัสดุ</button></h2>
+    <div class="card tw"><table><thead><tr><th>#</th><th>วัสดุ</th><th>คงเหลือ</th><th>จองในคิว</th><th>ใช้ได้</th><th>ขั้นต่ำ</th><th></th></tr></thead><tbody id="matBody"></tbody></table></div>
+    <h2>ความเคลื่อนไหวล่าสุด</h2>
+    <div class="card tw"><table><thead><tr><th>เวลา</th><th>วัสดุ</th><th>เปลี่ยนแปลง</th><th>ประเภท</th><th>หมายเหตุ</th></tr></thead><tbody id="moveBody"></tbody></table></div>
+  </section>
+
+  <section id="t-printers" hidden>
+    <h2>เครื่องพิมพ์ <span class="sp"></span><button class="btn p" onclick="openPrinter()">+ เพิ่มเครื่อง</button></h2>
+    <div class="grid printers" id="prFull"></div>
+  </section>
+
+  <section id="t-history" hidden>
+    <h2>ประวัติงาน <span class="sp"></span>
+      <select id="hFilter" style="width:auto" onchange="loadHistory()"><option value="">ทั้งหมด</option><option value="done">เสร็จแล้ว</option><option value="failed">พิมพ์เสีย</option><option value="cancelled">ยกเลิก</option><option value="queued">รอคิว</option><option value="printing">กำลังพิมพ์</option></select>
+    </h2>
+    <div class="card tw"><table><thead><tr><th>#</th><th>งาน</th><th>ลูกค้า</th><th>วัสดุ</th><th>ใช้จริง</th><th>ต้นทุน</th><th>เครื่อง</th><th>สถานะ</th><th>เสร็จเมื่อ</th></tr></thead><tbody id="histBody"></tbody></table></div>
+  </section>
+
+  <section id="t-settings" hidden>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(320px,1fr))">
+      <div class="card">
+        <h3 style="margin-top:0">การเชื่อมต่อ LINE OA</h3>
+        <div id="lineStatus" class="muted"></div>
+        <div class="f" style="margin-top:12px">
+          <label class="full">Group ID ที่รับแจ้งเตือน<input id="gid" placeholder="Cxxxxxxxx..."></label>
+        </div>
+        <div class="foot" style="justify-content:flex-start">
+          <button class="btn" onclick="saveGid()">บันทึก Group ID</button>
+          <button class="btn p" onclick="testLine()">ส่งข้อความทดสอบ</button>
+        </div>
+        <p class="muted">วิธีง่ายสุด: เชิญบอทเข้ากลุ่ม LINE แล้วพิมพ์ <code>ตั้งกลุ่มนี้</code> ในกลุ่ม ระบบจะจำ Group ID ให้อัตโนมัติ</p>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">เลือกเหตุการณ์ที่จะแจ้งเตือน</h3>
+        <div class="f" id="notifyFlags"></div>
+        <div class="foot" style="justify-content:flex-start"><button class="btn" onclick="saveFlags()">บันทึก</button></div>
+      </div>
+      <div class="card">
+        <h3 style="margin-top:0">รูปแบบข้อความ & สรุปประจำวัน</h3>
+        <div class="f">
+          <label class="ck full"><input type="checkbox" id="useFlex"> ส่งแบบการ์ด Flex มีปุ่มกด (เริ่ม/เสร็จ/เสีย กดได้จากในกลุ่ม)</label>
+          <label class="ck"><input type="checkbox" id="dailyOn"> ส่งสรุปประจำวันอัตโนมัติ</label>
+          <label>เวลา<input type="time" id="dailyTime"></label>
+        </div>
+        <div class="foot" style="justify-content:flex-start"><button class="btn" onclick="saveMsg()">บันทึก</button><button class="btn" onclick="sendDaily()">ส่งสรุปวันนี้เลย</button></div>
+      </div>
+      <div class="card full" style="grid-column:1/-1">
+        <h3 style="margin-top:0">ข้อความที่ส่งล่าสุด</h3>
+        <div id="nlog"></div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<dialog id="dJob"><form method="dialog" onsubmit="return saveJob(event)">
+  <h3 id="dJobT">เพิ่มงานพิมพ์</h3>
+  <input type="hidden" name="id">
+  <div class="f">
+    <label class="full">เลือกจากสินค้า (ไม่บังคับ)<select name="product_id" id="jobProd" onchange="fillFromProduct(this.value)"></select></label>
+    <label class="full">ชื่องาน / ไฟล์ *<input name="title" required placeholder="เช่น ฟิกเกอร์มังกร v2.stl"></label>
+    <label>ลูกค้า<input name="customer"></label>
+    <label>กำหนดส่ง<input name="due_date" type="date"></label>
+    <label class="full">วัสดุ<select name="material_id" id="jobMat"></select></label>
+    <label>น้ำหนักต่อชิ้น (กรัม)<input name="est_grams" type="number" step="0.1" min="0"></label>
+    <label>เวลาต่อชิ้น (นาที)<input name="est_minutes" type="number" min="0"></label>
+    <label>จำนวนชิ้น<input name="qty" type="number" min="1" value="1"></label>
+    <label class="ck" style="align-self:end"><input type="checkbox" name="priority"> 🔥 งานด่วน (แทรกคิว)</label>
+    <label class="full">หมายเหตุ<textarea name="note" rows="2" placeholder="infill, layer height, สี ฯลฯ"></textarea></label>
+  </div>
+  <div class="foot"><button class="btn" value="cancel" formnovalidate>ยกเลิก</button><button class="btn p">บันทึก</button></div>
+</form></dialog>
+
+<dialog id="dMat"><form method="dialog" onsubmit="return saveMat(event)">
+  <h3 id="dMatT">เพิ่มวัสดุ</h3>
+  <input type="hidden" name="id">
+  <div class="f">
+    <label>ชนิด *<input name="type" list="types" required placeholder="PLA"></label>
+    <label>สี<input name="color" placeholder="ดำ"></label>
+    <label>ยี่ห้อ<input name="brand"></label>
+    <label>ราคา/กก. (บาท)<input name="cost_per_kg" type="number" min="0"></label>
+    <label class="newonly">ยอดยกมา (กรัม)<input name="stock_g" type="number" min="0" placeholder="1000 = 1 ม้วน"></label>
+    <label>แจ้งเตือนเมื่อเหลือต่ำกว่า (กรัม)<input name="min_g" type="number" min="0" value="200"></label>
+  </div>
+  <datalist id="types"><option>PLA</option><option>PLA+</option><option>PETG</option><option>ABS</option><option>ASA</option><option>TPU</option><option>Nylon</option><option>Resin</option></datalist>
+  <div class="foot"><button class="btn" value="cancel" formnovalidate>ยกเลิก</button><button class="btn p">บันทึก</button></div>
+</form></dialog>
+
+<dialog id="dStock"><form method="dialog" onsubmit="return saveStock(event)">
+  <h3 id="dStockT">รับวัสดุเข้า</h3>
+  <input type="hidden" name="id">
+  <div class="f">
+    <label>ประเภท<select name="reason"><option value="in">รับเข้า (+)</option><option value="adjust">ปรับยอด (+/-)</option></select></label>
+    <label>จำนวน (กรัม)<input name="grams" type="number" step="0.1" required></label>
+    <div class="full acts"><span class="muted">ด่วน:</span><button type="button" class="btn s" onclick="this.form.grams.value=1000">1 ม้วน (1kg)</button><button type="button" class="btn s" onclick="this.form.grams.value=2000">2 ม้วน</button><button type="button" class="btn s" onclick="this.form.grams.value=5000">5 ม้วน</button></div>
+    <label class="full">หมายเหตุ<input name="note" placeholder="เลขบิล / ร้านค้า"></label>
+  </div>
+  <div class="foot"><button class="btn" value="cancel" formnovalidate>ยกเลิก</button><button class="btn p">บันทึก</button></div>
+</form></dialog>
+
+<dialog id="dAct"><form method="dialog" onsubmit="return doAct(event)">
+  <h3 id="dActT"></h3>
+  <input type="hidden" name="id"><input type="hidden" name="kind">
+  <div class="f" id="dActF"></div>
+  <div class="foot"><button class="btn" value="cancel" formnovalidate>ยกเลิก</button><button class="btn p" id="dActB">ยืนยัน</button></div>
+</form></dialog>
+
+<dialog id="dPr"><form method="dialog" onsubmit="return savePrinter(event)">
+  <h3>เครื่องพิมพ์</h3>
+  <input type="hidden" name="id">
+  <div class="f">
+    <label>ชื่อเครื่อง *<input name="name" required placeholder="เครื่อง 1"></label>
+    <label>รุ่น<input name="model" placeholder="Bambu P1S"></label>
+  </div>
+  <div class="foot"><button class="btn" value="cancel" formnovalidate>ยกเลิก</button><button class="btn p">บันทึก</button></div>
+</form></dialog>
+
+<dialog id="dProd"><form method="dialog" onsubmit="return saveProd(event)">
+  <h3>ตั้งค่าสินค้าสำหรับพิมพ์</h3>
+  <input type="hidden" name="id">
+  <p class="muted" id="dProdName" style="margin-top:-6px"></p>
+  <div class="f">
+    <label class="full">ชื่อย่อ (ใช้แสดงในคิวและ LINE)<input name="short_name" required></label>
+    <label>น้ำหนักต่อชิ้น (กรัม)<input name="est_grams" type="number" step="0.1" min="0"></label>
+    <label>เวลาพิมพ์ต่อชิ้น (นาที)<input name="est_minutes" type="number" min="0"></label>
+    <label class="ck full"><input type="checkbox" name="all" checked> ใช้ค่าเดียวกันกับทุกตัวเลือก (ทุกสี/แบบ) ของสินค้านี้</label>
+    <label class="ck full"><input type="checkbox" name="hidden"> ซ่อนสินค้านี้ (เช่น สินค้าที่ไม่ได้พิมพ์เอง)</label>
+  </div>
+  <div class="foot"><button class="btn" value="cancel" formnovalidate>ยกเลิก</button><button class="btn p">บันทึก</button></div>
+</form></dialog>
+
+<div id="toast"></div>
+
+<script>
+const ST = {queued:'รอคิว',printing:'กำลังพิมพ์',done:'เสร็จแล้ว',failed:'พิมพ์เสีย',cancelled:'ยกเลิก'};
+const PST = {idle:'ว่าง',printing:'กำลังพิมพ์',maintenance:'ซ่อมบำรุง'};
+const MV = {in:'รับเข้า',adjust:'ปรับยอด',print:'ใช้พิมพ์',waste:'งานเสีย'};
+const FLAGS = {newJob:'งานใหม่เข้าคิว',start:'เริ่มพิมพ์',done:'พิมพ์เสร็จ',failed:'พิมพ์เสีย/ยกเลิก/ซ่อม',lowStock:'วัสดุใกล้หมด',stockIn:'รับ/ปรับสต็อก'};
+const COLORS = {'ดำ':'#111','ขาว':'#fff','แดง':'#e11d48','น้ำเงิน':'#2563eb','ฟ้า':'#38bdf8','เขียว':'#16a34a','เหลือง':'#facc15','ส้ม':'#f97316','ชมพู':'#ec4899','ม่วง':'#9333ea','เทา':'#9ca3af','น้ำตาล':'#92400e','ใส':'transparent','black':'#111','white':'#fff','red':'#e11d48','blue':'#2563eb','green':'#16a34a','yellow':'#facc15','orange':'#f97316','gray':'#9ca3af','grey':'#9ca3af'};
+let D = {queue:[],materials:[],printers:[],stats:{}};
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const baht = n => '฿'+Number(n||0).toLocaleString('th-TH',{maximumFractionDigits:2});
+const g = v => Math.abs(v) >= 1000 ? (v/1000).toFixed(2)+' kg' : Math.round(v)+' g';
+const mins = m => { m=Math.round(m||0); const h=Math.floor(m/60); return h? `${h}ชม. ${m%60}น.` : `${m} น.`; };
+const dot = c => `<span class="dot" style="background:${COLORS[(c||'').toLowerCase().trim()] || 'var(--chip)'}"></span>`;
+const mlabel = (t,c,b) => t ? `${dot(c)} ${esc(t)} ${esc(c||'')} ${b?`<span class="muted">${esc(b)}</span>`:''}` : '<span class="muted">-</span>';
+function toast(t){ const e=$('#toast'); e.textContent=t; e.classList.add('on'); clearTimeout(e._t); e._t=setTimeout(()=>e.classList.remove('on'),2800); }
+async function api(path, method='GET', body){
+  const r = await fetch('/api'+path,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok){ toast('❗ '+(j.error||r.statusText)); throw new Error(j.error); }
+  return j;
+}
+const formData = f => Object.fromEntries([...new FormData(f)].map(([k,v])=>[k,v]));
+
+// ---------- tabs ----------
+let tab = 'queue';
+$('#tabs').onclick = e => { const t=e.target.dataset.t; if(!t) return; tab=t;
+  document.querySelectorAll('#tabs button').forEach(b=>b.classList.toggle('on',b.dataset.t===t));
+  document.querySelectorAll('main>section').forEach(s=>s.hidden = s.id!=='t-'+t);
+  refresh(); };
+
+async function refresh(){
+  D = await api('/dashboard');
+  renderStats(); renderPrinters(); renderQueue(); renderMats();
+  if(tab==='stock') loadMoves();
+  if(tab==='history') loadHistory();
+  if(tab==='settings') loadSettings();
+  if(tab==='products' || !P.length) await loadProducts();
+}
+function renderStats(){
+  const s=D.stats;
+  $('#stats').innerHTML = [
+    ['⏳',s.queued,'งานรอคิว'],['🖨️',s.printing,'กำลังพิมพ์'],['✅',s.doneToday,'เสร็จวันนี้'],['🧵',g(s.usedToday),'ใช้วัสดุวันนี้'+(s.costToday?` · ${baht(s.costToday)}`:'')],['⚠️',s.lowStock,'วัสดุใกล้หมด']
+  ].map(([i,n,l])=>`<div class="card stat"><div class="n">${i} ${n}</div><div class="l">${l}</div></div>`).join('');
+}
+function printerCard(p, full){
+  const j = D.queue.find(x=>x.status==='printing' && x.printer_id===p.id);
+  let prog='';
+  if(j && j.est_minutes){ const el=(Date.now()-new Date(j.started_at.replace(' ','T')))/60000, tot=j.est_minutes*j.qty;
+    prog=`<div class="bar"><i style="width:${Math.min(100,el/tot*100)}%"></i></div><div class="muted">เหลือประมาณ ${mins(Math.max(0,tot-el))}</div>`; }
+  return `<div class="card pr"><h3>${esc(p.name)} <span class="chip st-${p.status}">${PST[p.status]}</span></h3>
+    <div class="muted">${esc(p.model||'')}</div>
+    ${j?`<div style="margin-top:6px">#${j.id} ${esc(j.title)}</div>${prog}
+      <div class="acts" style="margin-top:8px"><button class="btn s p" onclick="actDone(${j.id})">✅ เสร็จ</button><button class="btn s d" onclick="actFail(${j.id})">❌ เสีย</button></div>`:''}
+    ${full?`<div class="acts" style="margin-top:8px">
+      ${p.status==='idle'?`<button class="btn s" onclick="setPr(${p.id},'maintenance')">🔧 ซ่อมบำรุง</button>`:''}
+      ${p.status==='maintenance'?`<button class="btn s" onclick="setPr(${p.id},'idle')">✔ พร้อมใช้งาน</button>`:''}
+      <button class="btn s" onclick='openPrinter(${JSON.stringify(p)})'>แก้ไข</button>
+      ${p.status!=='printing'?`<button class="btn s d" onclick="delPr(${p.id})">ลบ</button>`:''}</div>`:''}
+  </div>`;
+}
+function renderPrinters(){
+  const none = '<div class="card empty">ยังไม่มีเครื่องพิมพ์ — ไปที่แท็บ "เครื่องพิมพ์" เพื่อเพิ่ม</div>';
+  $('#prMini').innerHTML = D.printers.map(p=>printerCard(p,false)).join('') || none;
+  $('#prFull').innerHTML = D.printers.map(p=>printerCard(p,true)).join('') || none;
+}
+function renderQueue(){
+  let n=0;
+  $('#queueBody').innerHTML = D.queue.map(j=>{
+    const pos = j.status==='queued' ? ++n : '';
+    return `<tr>
+      <td>${j.status==='queued'?`<b>${pos}</b> `:''}<span class="muted">#${j.id}</span></td>
+      <td>${j.priority?'<span class="hot">🔥 ด่วน</span> ':''}${j.source==='web'?'<span class="chip st-queued">🌐 เว็บ</span> ':''}<b>${esc(j.title)}</b>${j.order_no?`<div class="muted">🧾 ${esc(j.order_no)}</div>`:''}${j.customer?`<div class="muted">👤 ${esc(j.customer)}${j.contact?' · 📞 '+esc(j.contact):''}</div>`:''}${j.file_id?`<div><a href="/files/${esc(j.file_id)}" class="btn s" style="text-decoration:none;display:inline-block;margin-top:4px">📎 ดาวน์โหลด ${esc(j.file_name||'ไฟล์')}</a></div>`:''}${j.price?`<div class="muted">💰 ${baht(j.price)}</div>`:''}${j.due_date?`<div class="muted">📅 ${esc(j.due_date)}</div>`:''}${j.note?`<div class="muted">📝 ${esc(j.note)}</div>`:''}</td>
+      <td>${mlabel(j.material_type,j.material_color,j.material_brand)}</td>
+      <td>${j.qty} ชิ้น<div class="muted">${g(j.est_grams*j.qty)}</div></td>
+      <td>${mins(j.est_minutes*j.qty)}</td>
+      <td><span class="chip st-${j.status}">${ST[j.status]}</span>${j.printer_name?`<div class="muted">🖨 ${esc(j.printer_name)}</div>`:''}</td>
+      <td><div class="acts">${j.status==='queued'
+        ? `<button class="btn s p" onclick="actStart(${j.id})">▶ เริ่มพิมพ์</button><button class="btn s" onclick="editJob(${j.id})">แก้ไข</button><button class="btn s d" onclick="actCancel(${j.id})">ยกเลิก</button>`
+        : `<button class="btn s p" onclick="actDone(${j.id})">✅ เสร็จ</button><button class="btn s d" onclick="actFail(${j.id})">❌ เสีย</button>`}</div></td></tr>`;
+  }).join('') || '<tr><td colspan="7" class="empty">ไม่มีงานในคิว 🎉</td></tr>';
+}
+function renderMats(){
+  $('#matBody').innerHTML = D.materials.map(m=>{
+    const pct = Math.min(100, m.stock_g/Math.max(m.min_g*5,1000)*100);
+    return `<tr class="${m.low?'low':''}"><td class="muted">#${m.id}</td>
+      <td>${mlabel(m.type,m.color,m.brand)}${m.low?' <span class="chip st-failed">ใกล้หมด</span>':''}</td>
+      <td><b>${g(m.stock_g)}</b><div class="bar"><i style="width:${pct}%"></i></div></td>
+      <td>${m.reserved_g?g(m.reserved_g):'-'}</td>
+      <td class="${m.available_g<0?'no':''}">${g(m.available_g)}</td>
+      <td class="muted">${g(m.min_g)}</td>
+      <td><div class="acts"><button class="btn s p" onclick="openStock(${m.id})">+ รับเข้า</button><button class="btn s" onclick="openMat(${m.id})">แก้ไข</button><button class="btn s d" onclick="delMat(${m.id})">ลบ</button></div></td></tr>`;
+  }).join('') || '<tr><td colspan="7" class="empty">ยังไม่มีวัสดุ กด "+ เพิ่มวัสดุ"</td></tr>';
+  $('#jobMat').innerHTML = '<option value="">- ไม่ระบุ -</option>' + D.materials.map(m=>`<option value="${m.id}">${esc(m.type)} ${esc(m.color)} ${esc(m.brand)} (ใช้ได้ ${g(m.available_g)})</option>`).join('');
+}
+// ---------- products / order ----------
+let P = [];
+let CART = []; try { CART = JSON.parse(localStorage.getItem('cart')||'[]'); } catch {}
+let OINFO = {}; try { OINFO = JSON.parse(localStorage.getItem('oinfo')||'{}'); } catch {}
+const saveCart = () => { try { localStorage.setItem('cart', JSON.stringify(CART)); localStorage.setItem('oinfo', JSON.stringify(OINFO)); } catch {} };
+const ptitle = p => p.short_name + (p.variation_name ? ' - '+p.variation_name : '');
+async function loadProducts(){
+  P = await api('/products');
+  $('#jobProd').innerHTML = '<option value="">- งานทั่วไป / ไฟล์ลูกค้า -</option>' + P.filter(p=>!p.hidden).map(p=>`<option value="${p.id}">${esc(ptitle(p))}</option>`).join('');
+  renderProducts(); renderCart();
+}
+function matOptions(sel){ return '<option value="">- วัสดุ -</option>'+D.materials.map(m=>`<option value="${m.id}" ${m.id===sel?'selected':''}>${esc(m.type)} ${esc(m.color)}</option>`).join(''); }
+function renderProducts(){
+  const qs = ($('#pq').value||'').toLowerCase().split(/\s+/).filter(Boolean), showH = $('#pHidden').checked;
+  const groups = new Map();
+  for (const p of P) {
+    if (p.hidden && !showH) continue;
+    const hay = (p.name+' '+p.short_name+' '+p.variation_name+' '+p.sku).toLowerCase();
+    if (qs.some(w=>!hay.includes(w))) continue;
+    if (!groups.has(p.shop_product_id)) groups.set(p.shop_product_id, []);
+    groups.get(p.shop_product_id).push(p);
+  }
+  if (!P.length) { $('#plist').innerHTML = '<div class="card empty">ยังไม่มีสินค้า กด "📥 นำเข้าจาก Shopee" แล้วเลือกไฟล์ mass_update_sales_info...xlsx</div>'; return; }
+  $('#plist').innerHTML = [...groups.values()].map(vs => {
+    const h = vs[0], prices = vs.map(v=>v.price), lo=Math.min(...prices), hi=Math.max(...prices);
+    const noG = vs.some(v=>!v.est_grams);
+    return `<div class="card pg ${h.hidden?'hid':''}"><div class="pg-h"><div class="t"><b>${esc(h.short_name)}</b>
+      <div class="muted" title="${esc(h.name)}">${esc(h.name)}</div>
+      <div class="muted">${baht(lo)}${hi>lo?' – '+baht(hi):''} · ${vs.length} ตัวเลือก ${noG?'<span class="warn">· ยังไม่ตั้งกรัม/เวลา</span>':''}</div></div>
+      <button class="btn s" onclick="openProd(${h.id})">⚙ ตั้งค่า</button></div>
+      ${vs.map(v=>`<div class="vr"><div class="vn">${dot(colorWord(v.variation_name))} ${esc(v.variation_name||'(ไม่มีตัวเลือก)')}
+          ${v.in_queue?`<span class="chip st-queued">ในคิว ${v.in_queue}</span>`:''}</div>
+        <div>${baht(v.price)}</div>
+        <div class="muted" title="สต็อกบน Shopee">📦 ${v.shop_stock}</div>
+        <div><select onchange="setProdMat(${v.id},this.value)">${matOptions(v.material_id)}</select>
+          <div class="muted" style="font-size:12px">${v.est_grams?g(v.est_grams):'? g'} · ${v.est_minutes?mins(v.est_minutes):'? น.'} /ชิ้น</div></div>
+        <div class="qty"><input type="number" min="1" value="1" id="q${v.id}"><button class="btn s p" onclick="addCart(${v.id})">+ เพิ่ม</button></div>
+      </div>`).join('')}</div>`;
+  }).join('') || '<div class="card empty">ไม่พบสินค้าที่ค้นหา</div>';
+}
+const colorWord = s => { s=(s||'').toLowerCase(); for (const k of Object.keys(COLORS)) if (s.includes(k)) return k; return ''; };
+function addCart(id){
+  const qty = Math.max(1, Number($('#q'+id).value)||1);
+  const ex = CART.find(c=>c.product_id===id);
+  if (ex) ex.qty += qty; else CART.push({product_id:id, qty});
+  saveCart(); renderCart(); renderProducts();
+  const p = P.find(x=>x.id===id); toast(`เพิ่ม ${ptitle(p)} x${qty} ลงใบสั่งพิมพ์`);
+}
+function renderCart(){
+  CART = CART.filter(c=>P.some(p=>p.id===c.product_id));
+  $('#cartN').textContent = CART.reduce((s,c)=>s+c.qty,0);
+  let tg=0, tm=0;
+  const rows = CART.map((c,i)=>{ const p=P.find(x=>x.id===c.product_id); tg+=p.est_grams*c.qty; tm+=p.est_minutes*c.qty;
+    const m = D.materials.find(x=>x.id===p.material_id);
+    return `<div class="ci"><div class="t"><b>${esc(ptitle(p))}</b><div class="muted">${m?esc(m.type+' '+m.color):'<span class="warn">ยังไม่เลือกวัสดุ</span>'} · ${p.est_grams?g(p.est_grams*c.qty):'<span class="warn">ยังไม่ตั้งกรัม</span>'}</div></div>
+      <input type="number" min="1" value="${c.qty}" onchange="CART[${i}].qty=Math.max(1,+this.value||1);saveCart();renderCart()">
+      <button class="btn s d" onclick="CART.splice(${i},1);saveCart();renderCart();renderProducts()">✕</button></div>`; }).join('');
+  $('#cartBox').innerHTML = `<h3 style="margin:0 0 8px">🧾 ใบสั่งพิมพ์</h3>
+    ${rows || '<div class="empty">เลือกสินค้าจากรายการ แล้วกด "+ เพิ่ม"</div>'}
+    ${CART.length?`<div style="margin:10px 0" class="muted">รวม <b>${CART.reduce((s,c)=>s+c.qty,0)}</b> ชิ้น · ~${g(tg)} · ~${mins(tm)}</div>
+    <div class="f" style="grid-template-columns:1fr 1fr">
+      <label class="full">ลูกค้า / เลขออเดอร์<input id="oCust" value="${esc(OINFO.customer||'')}" oninput="OINFO.customer=this.value;saveCart()" placeholder="เช่น Shopee #2511..."></label>
+      <label>กำหนดส่ง<input type="date" id="oDue" value="${esc(OINFO.due_date||'')}" onchange="OINFO.due_date=this.value;saveCart()"></label>
+      <label class="ck" style="align-self:end"><input type="checkbox" id="oPri" ${OINFO.priority?'checked':''} onchange="OINFO.priority=this.checked;saveCart()"> 🔥 ด่วน</label>
+      <label class="full">หมายเหตุถึงทีม<textarea id="oNote" rows="2" oninput="OINFO.note=this.value;saveCart()">${esc(OINFO.note||'')}</textarea></label>
+    </div>
+    <div class="foot"><button class="btn" onclick="if(confirm('ล้างรายการทั้งหมด?')){CART=[];OINFO={};saveCart();renderCart();renderProducts()}">ล้าง</button>
+      <button class="btn p" onclick="sendOrder()">📤 ส่งเข้าคิว + แจ้งทีมใน LINE</button></div>`:''}`;
+}
+async function sendOrder(){
+  const r = await api('/orders','POST',{items:CART, ...OINFO});
+  CART=[]; OINFO={}; saveCart(); toast(`✅ สร้างใบสั่ง ${r.order_no} (${r.jobs.length} งาน) และแจ้งทีมแล้ว`); refresh();
+}
+async function setProdMat(id, mid){ await api('/products/'+id,'PUT',{material_id: mid?Number(mid):null}); const p=P.find(x=>x.id===id); p.material_id=mid?Number(mid):null; renderCart(); }
+function openProd(id){
+  const p=P.find(x=>x.id===id), f=$('#dProd form'); f.reset();
+  f.id.value=id; f.short_name.value=p.short_name; f.est_grams.value=p.est_grams||''; f.est_minutes.value=p.est_minutes||''; f.hidden.checked=!!p.hidden;
+  $('#dProdName').textContent = p.name; $('#dProd').showModal();
+}
+async function saveProd(e){
+  e.preventDefault(); const f=e.target;
+  await api('/products/'+f.id.value,'PUT',{short_name:f.short_name.value, est_grams:f.est_grams.value, est_minutes:f.est_minutes.value, hidden:f.hidden.checked?1:0, all:f.all.checked});
+  $('#dProd').close(); toast('บันทึกแล้ว'); loadProducts();
+}
+async function importXlsx(inp){
+  const file = inp.files[0]; if(!file) return;
+  const r = await fetch('/api/products/import',{method:'POST',headers:{'Content-Type':'application/octet-stream'},body:file});
+  const j = await r.json(); inp.value='';
+  if(!r.ok) return toast('❗ '+j.error);
+  toast(`✅ นำเข้าแล้ว: ใหม่ ${j.added} · อัปเดต ${j.updated} ตัวเลือก`); loadProducts();
+}
+async function autoMat(){ const r=await api('/products/auto-material','POST'); toast(`จับคู่วัสดุได้ ${r.updated} รายการ`); loadProducts(); }
+function fillFromProduct(id){
+  const p=P.find(x=>x.id===Number(id)), f=$('#dJob form'); if(!p) return;
+  f.title.value=ptitle(p); f.est_grams.value=p.est_grams||''; f.est_minutes.value=p.est_minutes||''; if(p.material_id) f.material_id.value=p.material_id;
+}
+
+async function loadMoves(){
+  const r = await api('/stock-moves');
+  $('#moveBody').innerHTML = r.map(s=>`<tr><td class="muted">${esc(s.created_at)}</td><td>${mlabel(s.type,s.color,s.brand)}</td>
+    <td class="${s.change_g<0?'no':'ok'}">${s.change_g>0?'+':''}${g(s.change_g)}</td><td>${MV[s.reason]||s.reason}</td><td class="muted">${esc(s.note)}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">ยังไม่มีรายการ</td></tr>';
+}
+async function loadHistory(){
+  const r = await api('/jobs'+($('#hFilter').value?'?status='+$('#hFilter').value:''));
+  $('#histBody').innerHTML = r.map(j=>`<tr><td class="muted">#${j.id}</td><td>${esc(j.title)}${j.qty>1?' x'+j.qty:''}${j.order_no?`<div class="muted">🧾 ${esc(j.order_no)}</div>`:''}</td><td>${esc(j.customer)}</td>
+    <td>${mlabel(j.material_type,j.material_color)}</td><td>${j.actual_grams!=null?g(j.actual_grams):'-'}</td><td>${j.cost?baht(j.cost):'-'}</td><td>${esc(j.printer_name||'-')}</td>
+    <td><span class="chip st-${j.status}">${ST[j.status]}</span></td><td class="muted">${esc(j.finished_at||'')}</td></tr>`).join('') || '<tr><td colspan="9" class="empty">ไม่มีข้อมูล</td></tr>';
+}
+
+// ---------- jobs ----------
+function openJob(j){
+  const f=$('#dJob form'); f.reset(); f.id.value=''; $('#dJobT').textContent='เพิ่มงานพิมพ์';
+  f.product_id.closest('label').hidden = !!j;
+  if(j){ $('#dJobT').textContent='แก้ไขงาน #'+j.id; for(const k of ['id','title','customer','due_date','material_id','est_grams','est_minutes','qty','note']) f[k].value=j[k]??''; f.priority.checked=!!j.priority; }
+  $('#dJob').showModal();
+}
+function editJob(id){ openJob(D.queue.find(x=>x.id===id)); }
+async function saveJob(e){
+  e.preventDefault(); const f=e.target, b=formData(f); b.priority=f.priority.checked;
+  await (b.id ? api('/jobs/'+b.id,'PUT',b) : api('/jobs','POST',b));
+  $('#dJob').close(); toast(b.id?'บันทึกแล้ว':'เพิ่มงานเข้าคิวแล้ว และแจ้งเข้า LINE'); refresh();
+}
+function act(kind,id,title,fields,btn){
+  const f=$('#dAct form'); f.id.value=id; f.kind.value=kind; $('#dActT').textContent=title; $('#dActF').innerHTML=fields; $('#dActB').textContent=btn; $('#dAct').showModal();
+}
+function actStart(id){
+  const idle=D.printers.filter(p=>p.status==='idle');
+  if(!idle.length) return toast('❗ ไม่มีเครื่องพิมพ์ว่าง');
+  const j=D.queue.find(x=>x.id===id);
+  act('start',id,`เริ่มพิมพ์ #${id} ${j.title}`,`<label class="full">เลือกเครื่องพิมพ์<select name="printer_id">${idle.map(p=>`<option value="${p.id}">${esc(p.name)} ${esc(p.model)}</option>`).join('')}</select></label>`,'▶ เริ่มพิมพ์');
+}
+function actDone(id){
+  const j=D.queue.find(x=>x.id===id);
+  act('complete',id,`พิมพ์เสร็จ #${id} ${j.title}`,`<label class="full">วัสดุที่ใช้จริง (กรัม) — ระบบจะตัดสต็อกตามนี้<input name="actual_grams" type="number" step="0.1" min="0" value="${j.est_grams*j.qty}"></label>`,'✅ ยืนยันเสร็จ');
+}
+function actFail(id){
+  const j=D.queue.find(x=>x.id===id);
+  act('fail',id,`พิมพ์เสีย #${id} ${j.title}`,`<label>วัสดุที่เสีย (กรัม)<input name="waste_grams" type="number" step="0.1" min="0" value="0"></label>
+    <label>สาเหตุ<input name="reason" list="whys" placeholder="เช่น หลุดฐาน"></label><datalist id="whys"><option>หลุดฐาน</option><option>เส้นพัน/ติด</option><option>Layer shift</option><option>ไฟดับ</option><option>Spaghetti</option></datalist>
+    <label class="ck full"><input type="checkbox" name="requeue" checked> เพิ่มเข้าคิวใหม่ (ด่วน)</label>`,'บันทึกงานเสีย');
+}
+async function actCancel(id){ if(!confirm('ยกเลิกงาน #'+id+' ?')) return; await api(`/jobs/${id}/cancel`,'POST'); toast('ยกเลิกแล้ว'); refresh(); }
+async function doAct(e){
+  e.preventDefault(); const f=e.target, b=formData(f); if(f.requeue) b.requeue=f.requeue.checked;
+  await api(`/jobs/${b.id}/${b.kind}`,'POST',b); $('#dAct').close(); toast('บันทึกแล้ว และแจ้งเข้า LINE'); refresh();
+}
+
+// ---------- materials ----------
+function openMat(id){
+  const f=$('#dMat form'); f.reset(); f.id.value='';
+  const m=id && D.materials.find(x=>x.id===id);
+  $('#dMatT').textContent = m?'แก้ไขวัสดุ #'+id:'เพิ่มวัสดุ';
+  f.querySelector('.newonly').hidden=!!m;
+  if(m) for(const k of ['id','type','color','brand','cost_per_kg','min_g']) f[k].value=m[k]??'';
+  $('#dMat').showModal();
+}
+async function saveMat(e){ e.preventDefault(); const b=formData(e.target); await (b.id?api('/materials/'+b.id,'PUT',b):api('/materials','POST',b)); $('#dMat').close(); toast('บันทึกแล้ว'); refresh(); }
+async function delMat(id){ if(!confirm('ลบวัสดุนี้ออกจากรายการ?')) return; await api('/materials/'+id,'DELETE'); refresh(); }
+function openStock(id){ const m=D.materials.find(x=>x.id===id), f=$('#dStock form'); f.reset(); f.id.value=id; $('#dStockT').innerHTML='สต็อก: '+mlabel(m.type,m.color,m.brand); $('#dStock').showModal(); }
+async function saveStock(e){ e.preventDefault(); const b=formData(e.target); await api(`/materials/${b.id}/stock`,'POST',b); $('#dStock').close(); toast('อัปเดตสต็อกแล้ว'); refresh(); }
+
+// ---------- printers ----------
+function openPrinter(p){ const f=$('#dPr form'); f.reset(); f.id.value=p?.id||''; if(p){f.name.value=p.name; f.model.value=p.model||'';} $('#dPr').showModal(); }
+async function savePrinter(e){ e.preventDefault(); const b=formData(e.target); await (b.id?api('/printers/'+b.id,'PUT',b):api('/printers','POST',b)); $('#dPr').close(); refresh(); }
+async function setPr(id,status){ await api('/printers/'+id,'PUT',{status}); refresh(); }
+async function delPr(id){ if(!confirm('ลบเครื่องพิมพ์นี้?')) return; await api('/printers/'+id,'DELETE'); refresh(); }
+
+// ---------- settings ----------
+let S;
+async function loadSettings(){
+  S = await api('/settings');
+  $('#lineStatus').innerHTML = `Channel Access Token: ${S.line_token_set?'<b class="ok">✔ ตั้งค่าแล้ว</b>':'<b class="no">✘ ยังไม่ได้ตั้ง (ใส่ในไฟล์ .env)</b>'}<br>
+    Channel Secret: ${S.line_secret_set?'<b class="ok">✔ ตั้งค่าแล้ว</b>':'<b class="no">✘ ยังไม่ได้ตั้ง</b>'}<br>
+    Webhook URL: <code>${location.origin}/webhook</code>`;
+  $('#gid').value = S.line_group_id||'';
+  $('#useFlex').checked = S.flex; $('#dailyOn').checked = S.daily.enabled; $('#dailyTime').value = S.daily.time||'18:00';
+  $('#notifyFlags').innerHTML = Object.entries(FLAGS).map(([k,l])=>`<label class="ck"><input type="checkbox" data-k="${k}" ${S.notify[k]!==false?'checked':''}> ${l}</label>`).join('');
+  $('#nlog').innerHTML = S.log.map(l=>`<div style="margin-bottom:10px"><span class="muted">${esc(l.created_at)}</span> ${l.ok?'<span class="ok">✔ ส่งแล้ว</span>':`<span class="no">✘ ${esc(l.error||'')}</span>`}<pre class="log">${esc(l.text)}</pre></div>`).join('') || '<div class="empty">ยังไม่มี</div>';
+}
+async function saveGid(){ await api('/settings','PUT',{line_group_id:$('#gid').value}); toast('บันทึกแล้ว'); loadSettings(); }
+async function saveFlags(){ const n={...S.notify}; document.querySelectorAll('#notifyFlags input').forEach(i=>n[i.dataset.k]=i.checked); await api('/settings','PUT',{notify:n}); toast('บันทึกแล้ว'); }
+async function testLine(){ const r=await api('/line/test','POST'); toast(r.ok?'✅ ส่งเข้า LINE สำเร็จ':'❗ '+r.error); loadSettings(); }
+async function saveMsg(){ await api('/settings','PUT',{flex:$('#useFlex').checked, daily:{enabled:$('#dailyOn').checked, time:$('#dailyTime').value}}); toast('บันทึกแล้ว'); }
+async function sendDaily(){ const r=await api('/line/daily','POST'); toast(r.ok?'✅ ส่งสรุปแล้ว':'❗ '+r.error); loadSettings(); }
+async function sendSummary(){ const r=await api('/line/summary','POST'); toast(r.ok?'✅ ส่งสรุปเข้า LINE แล้ว':'❗ '+r.error); }
+
+refresh(); setInterval(()=>{ if(!document.querySelector('dialog[open]')) refresh(); }, 30000);
+</script>
+</body>
+</html>
